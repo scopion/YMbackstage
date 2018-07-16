@@ -1,10 +1,10 @@
 <template>
-<el-dialog title="提示" :visible.sync="Visible" width="30%" center>
+<el-dialog title="提示" :visible.sync="Visible" :show="show" width="30%" center @close="$emit('updata:show',false)">
   <span>需要注意的是内容是默认不居中的</span>
   <span slot="footer" class="dialog-footer">
-      <el-button @click="Visible = false">取 消</el-button>
-      <el-button type="primary" @click="Visible = false">确 定</el-button>
-    </span>
+        <el-button>取 消</el-button>
+        <el-button type="primary">确 定</el-button>
+      </span>
 </el-dialog>
 </template>
 
@@ -12,7 +12,18 @@
 export default {
   data() {
     return {
-      Visible: false
+      Visible: this.show
+    }
+  },
+  props: {
+    show: {
+      type: Boolean,
+      default: false
+    }
+  },
+  watch: {
+    show() {
+      this.visible = this.show;
     }
   }
 }

@@ -22,7 +22,7 @@
   <div class="block margin">
     <el-button class="pull-left" size="small" type="danger" @click="toggleSelection()">取消选择</el-button>
     <span class="demonstration"></span>
-    <el-pagination  @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[100, 200, 300, 400]" :page-size="100" layout="total, sizes, prev, pager, next, jumper" :total="400">
+    <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[100, 200, 300, 400]" :page-size="100" layout="total, sizes, prev, pager, next, jumper" :total="400">
     </el-pagination>
   </div>
   <!-- <div style="margin-top: 20px">
@@ -57,11 +57,13 @@
       <div class="grid-content bg-purple">123</div>
     </el-col>
   </el-row>
+  <dialog :show.sync="show"></dialog>
+  <el-button @click="open">出现</el-button>
 </div>
 </template>
 
 <script>
-import Dialog from 'dialog'
+import Dialog from '../components/dialog'
 export default {
   data() {
     return {
@@ -70,6 +72,7 @@ export default {
       gas: '',
       gasprice: '',
       currentPage: 10,
+      show: false
     }
   },
   methods: {
@@ -139,9 +142,15 @@ export default {
           message: '成功!',
         })
       }
+    },
+    open() {
+      this.show = true
     }
   },
   computed: {},
+  components: {
+    Dialog
+  },
   mounted: function() {
     this.getData()
   }
