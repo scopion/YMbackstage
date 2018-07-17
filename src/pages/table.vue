@@ -1,11 +1,27 @@
 <template>
-<div style="width: 70%;margin:0 auto">
-  <el-table ref="table" :data="tableData" style="width: 180rem" height="300" @selection-change="SelectionChange">
-    <el-table-column fixed type="index" :index="indexMethod">
+<div style="width: 80%;margin:0 auto">
+  <el-row :gutter="20">
+    <el-col :span="12">
+      <div class="grid-content bg-purple">
+        <el-input placeholder="请输入gas" v-model="gas" suffix-icon="el-icon-menu" size="large" clearable>
+          <template slot="prepend">gas</template>
+        </el-input>
+      </div>
+    </el-col>
+    <el-col :span="12">
+      <div class="grid-content bg-purple">
+        <el-input placeholder="请输入gasprice" v-model="gasprice" suffix-icon="el-icon-menu" size="large" clearable>
+          <template slot="prepend">gasprice</template>
+        </el-input>
+      </div>
+    </el-col>
+  </el-row>
+  <el-table ref="table" :data="tableData.slice((currentPage-1)*pagesize,currentPage*pagesize)" stripe style="width: 180rem" height="600" @selection-change="SelectionChange" @select="select" @select-all="selectAll">
+    <el-table-column fixed type="index" label="编号" :index="indexMethod" width="40">
     </el-table-column>
-    <el-table-column fixed type="selection" width="55">
+    <el-table-column fixed type="selection" width="50">
     </el-table-column>
-    <el-table-column fixed prop="hash" label="打款信息hash值" width="520">
+    <el-table-column fixed prop="hash" label="打款信息hash值" width="600">
     </el-table-column>
     <el-table-column prop="wallet" label="打款钱包地址" width="340">
     </el-table-column>
@@ -19,46 +35,36 @@
       </template>>
     </el-table-column>
   </el-table>
+  <!--分页 -->
   <div class="block margin">
-    <el-button class="pull-left" size="small" type="danger" @click="toggleSelection()">取消选择</el-button>
+    <el-button class="pull-right" size="small" type="info" @click="toggleSelection()">反选</el-button>
+    <el-button class="pull-right" size="small" type="danger" style="margin-right:1rem" @click="faildSelection()">筛选打款失败项目</el-button>
     <span class="demonstration"></span>
-    <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange" :current-page="currentPage" :page-sizes="[100, 200, 300, 400]" :page-size="100" layout="total, sizes, prev, pager, next, jumper" :total="400">
+    <el-pagination
+    class="pull-left"
+    background
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
+    :current-page="currentPage"
+    :page-sizes="[10, 20, 30, 50]"
+    :page-size="pagesize"
+    layout="total, sizes, prev, pager, next"
+    :total="total">
     </el-pagination>
   </div>
-  <!-- <div style="margin-top: 20px">
-    <el-button @click="toggleSelection([tableData[1], tableData[2]])">切换第二、第三行的选中状态</el-button>
-  </div> -->
-  <el-row :gutter="20">
-    <el-col :span="10">
-      <div class="grid-content bg-purple">
-        <el-input placeholder="请输入gas" v-model="gas" suffix-icon="el-icon-menu" size="large" clearable>
-          <template slot="prepend">gas</template>
-        </el-input>
-      </div>
-    </el-col>
-    <el-col :span="10">
-      <div class="grid-content bg-purple">
-        <el-input placeholder="请输入gasprice" v-model="gasprice" suffix-icon="el-icon-menu" size="large" clearable>
-          <template slot="prepend">gasprice</template>
-        </el-input>
-      </div>
-    </el-col>
-    <el-col :span="4">
-      <div class="grid-content bg-purple">
-        <el-button type="primary" size="medium" style="width:100%" @click.native="send()">发送</el-button>
-      </div>
-    </el-col>
-  </el-row>
-  <el-row :gutter="20">
+  <div class="margin">
+    <el-button type="primary" size="medium" style="width:100%" @click.native="send()">发送</el-button>
+  </div>
+  <!--分页 -->
+  <!-- <el-row :gutter="20">
     <el-col :span="12">
       <div class="grid-content bg-purple">123</div>
     </el-col>
     <el-col :span="12">
       <div class="grid-content bg-purple">123</div>
     </el-col>
-  </el-row>
-  <dialog :show.sync="show"></dialog>
-  <el-button @click="open">出现</el-button>
+  </el-row> -->
+  <Dialog :child-msg="gridData" :dialogTableVisible.sync="childVisible"></Dialog>
 </div>
 </template>
 
@@ -68,11 +74,16 @@ export default {
   data() {
     return {
       tableData: [],
-      selection: [],
+      faildTableData:[],
+      multipleSelection: [],//多选框的值
       gas: '',
       gasprice: '',
-      currentPage: 10,
-      show: false
+      currentPage: 1,
+      pagesize:10,//初始表格每页展示数量
+      total:5,//初始表格总数
+      gridData: [],//初始表格每页展示数量
+      childVisible:false,
+      hashList:[],//post的哈希数组
     }
   },
   methods: {
@@ -84,11 +95,15 @@ export default {
             res.data[i].amount = res.data[i].amount / 1000000000
           }
           that.tableData = res.data
+          that.total = res.data.length
           console.log(that.tableData)
+          console.log(that.total)
+          console.log(that.currentPage)
+          console.log(that.pagesize)
         }).catch((res) => {})
     },
     indexMethod(index) {
-      return index * 1;
+      return index * 1 +1;
     },
     formatter(row, column) {
       return row.address;
@@ -104,25 +119,65 @@ export default {
       if (rows) {
         rows.forEach(row => {
           this.$refs.table.toggleRowSelection(row);
+          let i = 1
+          i++
+          console.log(i)
         });
       } else {
         this.$refs.table.clearSelection();
       }
     },
-    SelectionChange(val) {
-      this.selection = val;
-      console.log(this.selection)
+        //---------------------------------------------------------------------筛选所有的faild的项目
+    faildSelection(){
+        console.log(this.tableData)
+        if(this.faildTableData.length == 0){
+          this.tableData.forEach((item)=>{
+            if(item.status == "faild"){
+                this.faildTableData.push(item)
+            }
+            this.tableData = this.faildTableData
+            this.currentPage = 1
+            this.pagesize = this.faildTableData.length
+          })
+        }else{
+          this.$message({
+            type: 'error',
+            showClose: true,
+            message: '已选中所有的失败打款项目,请勿重复选择!',
+          })
+        }
+    },
+    select(selection){
+      if (this.gas == '' || this.gasprice == '') {
+        this.gas = ''
+        this.gasprice = ''
+        this.$refs.table.clearSelection();
+        this.$message({
+          type: 'error',
+          showClose: true,
+          message: '失败,输入内容不能为空!',
+        })
+      }
+    },
+    SelectionChange(selection, row) {
+      this.multipleSelection = selection
+      console.log(this.multipleSelection)
       this.$message({
         type: 'success',
         showClose: true,
-        message: '已选择' + this.selection.length + '项',
+        message: '已选择' + this.multipleSelection.length + '项',
       })
+    },
+    selectAll(selection){
+        console.log(selection)
     },
     //---------------------------------------------------------------------分页
     handleSizeChange(val) {
       console.log(`每页 ${val} 条`);
+      this.pagesize = val
     },
     handleCurrentChange(val) {
+      this.currentPage = val;
       console.log(`当前页: ${val}`);
     },
     //---------------------------------------------------------------------发送信息
@@ -136,18 +191,25 @@ export default {
           message: '失败,输入内容不能为空!',
         })
       } else {
-        this.$message({
-          type: 'success',
-          showClose: true,
-          message: '成功!',
+        this.childVisible = true
+        this.gridData = this.multipleSelection
+        this.gridData.forEach((item)=>{
+          this.hashList.push(item.hash)
         })
+        const hash =  this.hashList
+        this.axios.post('http://172.10.2.7/public/home/index/afresh_info',hash).then((res)=>{
+          console.log(res)
+        }).catch((res)=>{
+
+        }),
+        console.log(this.gridData)
+        console.log(this.hashList)
       }
-    },
-    open() {
-      this.show = true
     }
   },
-  computed: {},
+  computed: {
+
+  },
   components: {
     Dialog
   },
@@ -161,8 +223,11 @@ export default {
 td {
     text-align: left;
 }
+.block {
+  overflow: hidden;
+}
 .margin {
-    margin-top: 2rem;
+    margin: 2rem 0;
 }
 .pull-right {
     float: right;

@@ -1,31 +1,29 @@
 <template>
-<el-dialog title="提示" :visible.sync="Visible" :show="show" width="30%" center @close="$emit('updata:show',false)">
-  <span>需要注意的是内容是默认不居中的</span>
-  <span slot="footer" class="dialog-footer">
-        <el-button>取 消</el-button>
-        <el-button type="primary">确 定</el-button>
-      </span>
-</el-dialog>
+<div>
+  <el-dialog :title="title" :visible.sync="dialogTableVisible" width="60%" center>
+    <el-table :data.sync="childMsg">
+      <el-table-column fixed="left" property="hash" label="哈希值" width="550"></el-table-column>
+      <el-table-column property="wallet" label="钱包地址" width="350"></el-table-column>
+      <el-table-column property="amount" label="金额" width="220"></el-table-column>
+    </el-table>
+    <span slot="footer" class="dialog-footer">
+      <el-button @click="dialogTableVisible = false">取 消</el-button>
+      <el-button type="primary" @click="dialogTableVisible = false">确 定</el-button>
+    </span>
+  </el-dialog>
+</div>
 </template>
 
 <script>
 export default {
   data() {
     return {
-      Visible: this.show
+      title:"详情",
+      formLabelWidth: '1200px'
     }
   },
-  props: {
-    show: {
-      type: Boolean,
-      default: false
-    }
-  },
-  watch: {
-    show() {
-      this.visible = this.show;
-    }
-  }
+  props: ['childMsg','dialogTableVisible'],
+  watch: {}
 }
 </script>
 
