@@ -1,11 +1,11 @@
 <template>
 <div style="width: 70%;margin:0 auto">
-  <el-table ref="table" v-loading="loading" :data="tableData" stripe style="width: 180rem" height="500" @selection-change="SelectionChange" @select-all="selectAll">
+  <el-table ref="table" v-loading="loading" :data="tableData.slice((currentPage-1)*pagesize,currentPage*pagesize)" stripe style="width: 180rem" height="500" @selection-change="SelectionChange" @select-all="selectAll">
     <el-table-column fixed type="index" label="编号" :index="indexMethod" width="40">
     </el-table-column>
     <el-table-column fixed type="selection" width="50">
     </el-table-column>
-    <el-table-column fixed prop="hash" label="打款信息hash值" width="560">
+    <el-table-column fixed prop="hash" label="打款信息hash值" width="600">
     </el-table-column>
     <el-table-column prop="wallet" label="打款钱包地址" width="340">
     </el-table-column>
@@ -24,8 +24,8 @@
     <el-button class="pull-right" size="small" type="info" @click="toggleSelection()">反选</el-button>
     <el-button class="pull-right" size="small" type="danger" style="margin-right:1rem" @click="faildSelection()">筛选打款失败项目</el-button>
     <el-button class="pull-right" size="small" type="info" style="margin-right:1rem" @click="refalsh()">刷新</el-button>
-    <span class="demonstration">注释注释注释注释注释注释注释注释</span>
-    <!-- <el-pagination
+    <span class="demonstration"></span>
+    <el-pagination
     class="pull-left"
     background
     @size-change="handleSizeChange"
@@ -35,7 +35,7 @@
     :page-size="pagesize"
     layout="total, sizes, prev, pager, next"
     :total="total">
-    </el-pagination> -->
+    </el-pagination>
   </div>
   <el-row :gutter="20">
     <el-col :span="8">
@@ -65,7 +65,7 @@
       <div class="grid-content bg-purple">123</div>
     </el-col>
   </el-row> -->
-  <Dialog :gridData="gridData" :visible="childVisible" :gas="gas" :gasprice="gasprice" :info="info" @show="show" ></Dialog>
+  <Dialog :child-msg="gridData" :dialogTableVisible.sync="childVisible"></Dialog>
 </div>
 </template>
 
@@ -86,8 +86,7 @@ export default {
       gridData: [],//初始表格每页展示数量
       childVisible:false,
       hashList:[],//post的哈希数组
-      loading:true,
-      info:[]
+      loading:true
     }
   },
   methods: {
@@ -189,9 +188,6 @@ export default {
       console.log(`当前页: ${val}`);
     },
     //---------------------------------------------------------------------发送信息
-    show(data){
-        this.childVisible = data.show
-    },
     send() {
       if (this.gas == '' || this.gasprice == '') {
         this.gas = ''
@@ -211,7 +207,6 @@ export default {
         console.log(hash)
         this.axios.post(this.baseUrl + '/afresh_info',hash).then((res)=>{
           console.log(res)
-          this.info = res
         }).catch((res)=>{
 
         }),
